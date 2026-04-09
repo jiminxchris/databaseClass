@@ -113,3 +113,167 @@ CASE
 	ELSE 'S'
 END
 FROM fms.CHICK_INFO;
+
+SELECT farm||gender|| breeds AS fgb,
+CASE gender
+	WHEN 'M' THEN 'Male'
+	WHEN 'F' THEN 'Female'
+	ELSE 'UnKnown'
+END gender_label
+FROM fms.CHICK_INFO;
+
+SELECT farm, count(DISTINCT date)
+FROM fms.env_cond
+WHERE lux >= 10
+GROUP BY farm;
+
+CASE
+	WHEN note IS NULL OR note='' THEN '없음'
+	ELSE note
+END
+
+SELECT round(avg(egg_weight),2)
+FROM fms.CHICK_INFO;
+
+SELECT *
+FROM fms.CHICK_INFO
+WHERE egg_weight > 66.7;
+
+
+SELECT a.chick_no, 
+a.raw_weight,
+b.customer
+FROM fms.prod_result a
+JOIN fms.ship_result b
+ON a.chick_no = b.chick_no;
+
+SELECT a.chick_no, 
+a.raw_weight,
+b.customer
+FROM fms.prod_result a, fms.ship_result b
+WHERE a.chick_no = b.chick_no;
+
+
+SELECT chick_no, gender, hatchday
+FROM fms.CHICK_INFO
+WHERE farm='A'
+AND gender='M'
+AND hatchday='2023-01-01'
+union
+SELECT 'C2600001', 'M', '2026-04-09';
+
+SELECT c.gender, round(avg(p.RAW_WEIGHT), 1) AS avg_weight
+FROM fms.CHICK_INFO c
+JOIN fms.prod_result p
+ON c.chick_no = p.CHICK_NO
+GROUP BY c.gender;
+
+SELECT c.CHICK_NO, c.FARM, h.CHECK_DATE
+FROM fms.CHICK_INFO c
+JOIN fms.HEALTH_COND h
+ON c.chick_no = h.CHICK_NO
+WHERE h.DIARRHEA_YN= 'Y'
+ORDER BY h.CHECK_DATE desc;
+
+SELECT round(avg(egg_weight),2)
+FROM fms.CHICK_INFO;
+
+SELECT *
+FROM fms.CHICK_INFO
+WHERE egg_weight > (SELECT round(avg(egg_weight),2)
+FROM fms.CHICK_INFO);
+
+SELECT
+a.chick_no, a.breeds,
+b.code_desc "breeds_nm"
+FROM
+fms.chick_info a
+JOIN fms.master_code b
+ON a.breeds = b.code
+WHERE 
+b.column_nm = 'breeds';
+
+SELECT a.CHICK_NO, a.BREEDS,
+(
+	SELECT m.code_desc
+	FROM fms.master_code m
+	WHERE m.column_nm='breeds'
+	AND m.code  = a.breeds
+)
+FROM fms.CHICK_INFO a;
+
+SELECT code,code_desc
+FROM fms.master_code
+WHERE column_nm='breeds';
+
+SELECT CHICK_NO, BREEDS
+FROM fms.CHICK_INFO;
+
+SELECT a.CHICK_NO, a.BREEDS, b.code_desc
+FROM fms.CHICK_INFO a,
+(
+	SELECT code,code_desc
+	FROM fms.master_code
+	WHERE column_nm='breeds'
+) b
+WHERE a.BREEDS = b.CODE;
+
+
+CREATE OR REPLACE VIEW fms.breeds_codedesc
+(CHICK_NO, BREEDS, code_desc)
+as
+SELECT a.CHICK_NO, a.BREEDS, b.code_desc
+FROM fms.CHICK_INFO a,
+(
+	SELECT code,code_desc
+	FROM fms.master_code
+	WHERE column_nm='breeds'
+) b
+WHERE a.BREEDS = b.CODE;
+
+
+SELECT * 
+FROM fms.breeds_codedesc;
+
+
+SELECT
+a.prod_date,
+(
+	SELECT m.code_desc "breeds_nm"
+	FROM fms.master_code m
+	WHERE m.column_nm = 'breeds'
+	AND m.code = b.breeds
+),
+sum(a.raw_weight) "total_sum"
+FROM
+	fms.prod_result a,
+	fms.chick_info b
+WHERE
+	a.chick_no = b.chick_no
+GROUP BY a.prod_date, b.breeds;
+
+
+
+CREATE OR REPLACE VIEW fms.breeds_prod
+(
+	prod_date, breeds_nm, total_sum
+)
+AS
+SELECT
+a.prod_date,
+(
+	SELECT m.code_desc "breeds_nm"
+	FROM fms.master_code m
+	WHERE m.column_nm = 'breeds'
+	AND m.code = b.breeds
+),
+sum(a.raw_weight) "total_sum"
+FROM
+fms.prod_result a,
+fms.chick_info b
+WHERE
+a.chick_no = b.chick_no
+GROUP BY a.prod_date, b.breeds;
+
+SELECT *
+FROM fms.breeds_prod;
